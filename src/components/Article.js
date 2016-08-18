@@ -32,7 +32,7 @@ export default class Article extends Component {
         </div>);
         }else{
             return (<div className="commentBlock">
-                this article dont have comments
+                <p className="toogleComments" >this article dont have comments</p>
             </div>);
         }
 
