@@ -1,34 +1,63 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
 
 export default class Article extends Component {
-/*
-
-    constructor() {
-        super()
-        this.state = {
-            isOpen: false
+    /* коментарий пусть побудит, он хорошее напоминание
+        constructor() {
+            super()
+            this.state = {
+                isOpen: false
+            }
         }
+
+    */
+    state = {
+        isOpen: false,
+        showComments: false
     }
 
-*/
-    state = {
-        isOpen: false
+    commentDiv() {
+        const { article } = this.props;
+        if (article.comments) {
+            return (<div className="commentBlock">
+            <p onClick={this.toogleComments} className="toogleComments" >
+            {this.state.showComments ? `hide comments (${article.comments.length})` : `show comments (${article.comments.length})` }
+            </p>
+            {this.state.showComments?article.comments.map(e=>{
+                return (<div key = {e.id} className="comment" >
+                            <p>{e.user}</p>
+                            <div>{e.text}</div>
+                    </div>);
+            }):null}
+
+        </div>);
+        }else{
+            return (<div className="commentBlock">
+                this article dont have comments
+            </div>);
+        }
+
     }
 
     render() {
-        const { article } = this.props
-        const body = this.state.isOpen ? <section>{article.text}</section> : null
+        const { article } = this.props;
+        const body = this.state.isOpen ? <section>{article.text}{this.commentDiv()}</section> : null;
         return (
             <div>
-                <h3 onClick = {this.handleClick}>{article.title}</h3>
-                {body}
+                <h3 onClick = {this.toogleArticle} >{article.title}</h3>
+                {body}                
             </div>
         )
     }
 
-    handleClick = (ev) => {
+    toogleArticle = (ev) => {
         this.setState({
             isOpen: !this.state.isOpen
+        })
+    }
+
+    toogleComments = (ev) => {
+        this.setState({
+            showComments: !this.state.showComments
         })
     }
 }

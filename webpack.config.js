@@ -6,17 +6,17 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 function CreateWebpackConfig(type) {
     var folder = (type == 'js' ? 'src' : 'assets');
-    this.entry ={};
+    this.entry = {};
     //custom files input
     if (type == 'js') {
         this.entry.app = path.join(__dirname, folder, 'app');
     } else if (type == 'scss') {
-        //this.entry.common = path.join(__dirname, folder, 'app');
+        this.entry.app = path.join(__dirname, folder, 'app');
     }
 
     this.output = {
         filename: '[name].' + (type == 'js' ? 'js' : 'css'),
-        path: path.join(__dirname, 'build',folder),
+        path: path.join(__dirname, 'build', folder),
         publicPath: ''
     }; //publicPath !!
 
@@ -30,8 +30,7 @@ function CreateWebpackConfig(type) {
         loaders: [{
                 test: /\.(jpe?g|png|gif|svg|ttf|eot|woff|woff2)$/i,
                 loader: (type == 'js' ? 'ignore-loader' : 'file?name=[path][name].[ext]')
-            },
-            {
+            }, {
                 test: /\.json/,
                 loader: "json"
             },
