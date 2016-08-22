@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Article from './Article';
 
 export default class ArticleList extends Component {
+    //собственно задание было вынести эту логику в декоратор
     state = {
         openArticleId: null
     }
