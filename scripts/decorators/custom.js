@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import * as lib from '../lib/index';
 
+// Я не очень понял, зачем ты так разнес - разобраться в такой структуре уже достаточно сложно: в будущем ты и сам в ней запутаешься
 export default (Component, libs_names) => {
     return class ToggleOpenComponent extends Component {
 
