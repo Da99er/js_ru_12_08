@@ -1,15 +1,10 @@
-import React, { Component } from 'react';
-import custom from '../decorators/custom';
-
+import React, { Component, PropTypes } from 'react';
 import Comment from './Comment';
+import toggleOpen from '../decorators/toogleOpen.js';
 
 class CommentList extends Component {
     render() {
-        const { comments } = this.props.props;
-        const { toggleOpen } = this.props.lib.mouseEvents;
-        const { isOpen } = this.props.state;
-
-        let showHeadComment;
+        const { comments, toggleOpen, isOpen } = this.props;
 
         if (!comments || !comments.length) {
             return (<div className="commentBlock" >
@@ -23,15 +18,17 @@ class CommentList extends Component {
 
         const commentItems = comments.map(comment => <li key = {comment.id}><Comment comment = {comment} /></li>)
 
-        return (<div className="commentBlock" >
-            {comment_head}
-            {isOpen?<ul>{commentItems}</ul>:null}
-        </div>)
+        return <div className="commentBlock" >
+                {comment_head}
+                {isOpen?<ul>{commentItems}</ul>:null}
+            </div>;
+
     }
 }
 
 CommentList.propTypes = {
-
+    comments: PropTypes.array,
+    isOpen: PropTypes.bool.isRequired
 }
 
-export default custom(CommentList, ['mouseEvents']);
+export default toggleOpen(CommentList);

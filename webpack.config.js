@@ -1,24 +1,31 @@
 'use strict';
+//production development test
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const webpack = require('webpack');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const fs = require('fs');
 
 function CreateWebpackConfig(type) {
-    var folder = (type == 'js' ? 'scripts' : 'assets');
-    this.entry = {};
+    let folder = (type == 'js' ? 'scripts' : 'assets');
+    let ext = (type == 'js' ? 'js' : 'css');
+    this.entry = {
+        home: path.join(__dirname, folder, 'home')
+    };
     //custom files input
     if (type == 'js') {
-        this.entry.app = path.join(__dirname, folder, 'app');
+        //this.entry['common'] = path.join(__dirname, folder, 'common');
     } else if (type == 'scss') {
-        this.entry.app = path.join(__dirname, folder, 'app');
+        //this.entry['filename'] = path.join(__dirname,  folder, 'filename');
     }
 
     this.output = {
-        filename: '[name].' + (type == 'js' ? 'js' : 'css'),
-        path: path.join(__dirname, 'build', folder),
+        filename: '[name].' + ext,
+        path: path.join(__dirname, 'bundle'),
         publicPath: ''
     }; //publicPath !!
+
+    let outputfile = path.join(this.output.path,`home.${ext}`);
 
     this.resolve = {
         extensions: ['']
@@ -56,18 +63,33 @@ function CreateWebpackConfig(type) {
 
     this.plugins = [
         new ExtractTextPlugin('[name].css'),
-        new webpack.NoErrorsPlugin(),
         new webpack.DefinePlugin({
             NODE_ENV: JSON.stringify(NODE_ENV)
-        })
+        }),
+        function(){
+            this.plugin("done", function(stats) {
+                if (stats.compilation.errors && stats.compilation.errors.length) {
+                    console.log(stats.compilation.errors[0].error);                 
+                    if (fs.existsSync(outputfile)){
+                        fs.unlinkSync(outputfile);
+                    }
+                }
+
+            });
+        }
     ];
 
     this.devtool = (NODE_ENV == 'development' ? "inline-source-map" : '');
 
     if (NODE_ENV == 'production') {
         this.plugins.push(new webpack.optimize.UglifyJsPlugin({
+            beautify: false,
+            comments: false,
             compress: {
-                // don't show unreachable variables etc
+                sequences: true,
+                booleans: true,
+                loops: true,
+                unused: true,
                 warnings: false,
                 drop_console: true,
                 unsafe: true

@@ -1,18 +1,14 @@
 import React, { Component, PropTypes } from 'react';
 import CommentList from './CommentList'
 
-import custom from '../decorators/custom';
-
 class Article extends Component {
     render() {
-        const { article, isOpen, toggleOpenArticle } = this.props;
-        let showArticle = isOpen ? (<div className="article" >{article.text}  <CommentList comments={article.comments } state={{"isOpen":false}} /></div>) : null;
-        return (
-            <div>
+        const { article, openArticleId, toggleOpenArticle } = this.props;
+        let showArticle = openArticleId ? (<div className="article" >{article.text}  <CommentList comments={article.comments } isOpen={false}  /></div>) : null;
+        return <div>
                 <h3 onClick = {toggleOpenArticle} >{article.title}</h3>   
                 {showArticle}           
             </div>
-        )
     }
 }
 
@@ -23,7 +19,7 @@ Article.propTypes = {
         text:PropTypes.string,
         title:PropTypes.string
     }),
-    isOpen: PropTypes.bool,
+    openArticleId: PropTypes.bool,
     toggleOpenArticle: PropTypes.func
 };
 

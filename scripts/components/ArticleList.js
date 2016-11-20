@@ -1,38 +1,24 @@
 import React, { Component } from 'react';
 import Article from './Article';
+import toggleOpenArticle from '../decorators/toggleOpenArticle'
 
-export default class ArticleList extends Component {
-    //собственно задание было вынести эту логику в декоратор
-    state = {
-        openArticleId: null
-    }
-
+class ArticleList extends Component {
     render() {
-        const articleItems = this.props.articles.map(articleObject =>
+        const { articles, toggleOpenArticle, openArticleId } = this.props;
+
+        const articleItems = articles.map(articleObject =>
             <li key = {articleObject.id}>
                 <Article article = {articleObject}
-                    isOpen = {this.state.openArticleId === articleObject.id}
-                    toggleOpenArticle = {this.toggleOpenArticle(articleObject.id)}
+                    openArticleId = {openArticleId === articleObject.id}
+                    toggleOpenArticle = {toggleOpenArticle(articleObject.id)}
                 />
             </li>);
-        return (
-            <ul className="articleList">
+
+        return <ul className="articleList">
                 {articleItems}
             </ul>
-        )
     }
 
-    toggleOpenArticle = id => ev => {
-        if (ev) ev.preventDefault();
-        if (id != this.state.openArticleId) {
-            this.setState({
-                openArticleId: id
-            });
-        } else {
-            this.setState({
-                openArticleId: null
-            });
-        }
-
-    }
 }
+
+export default toggleOpenArticle(ArticleList);
