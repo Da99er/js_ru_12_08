@@ -2,8 +2,15 @@
     background-color: #ffffa1;
     .toogleComments{
     	text-align: center;
-    	padding: 10px 0;
+    	padding: 10px 0px;
     	cursor:pointer;
+        &>strong {
+            font-weight: bold;
+            margin: 10px 6px;
+            font-size: 16px;
+            color: #322500;
+
+        }
     }
     .comment {
         border: 1px solid #ffc58c;
