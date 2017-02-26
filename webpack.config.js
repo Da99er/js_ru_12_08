@@ -1,24 +1,78 @@
-'use strict';
-const NODE_ENV = process.env.NODE_ENV || 'development';
 const webpack = require('webpack');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
+const exec = require('child_process').exec;
 
-function CreateWebpackConfig(type) {
-    let folder = (type == 'js' ? 'scripts' : 'assets');
-    let ext = (type == 'js' && 'js' || type == 'scss' && 'css' || type == 'html' && 'html');
+exec(`rm -fr ${__dirname}/bundle/*`, (err, stdout, stderr) => {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    console.log(stdout);
+});
 
-    this.entry = {
-        index: path.join(__dirname, folder, 'index')
+function CreateWebpackConfig(type, options) {
+    let folder = (type == "js" ? "scripts" : "assets");
+    let ext = (type == "js" && "js" || type == "scss" && "css");
+
+    this.plugins = [];
+    if (options.ENV == "production") {
+        this.plugins.push(new webpack.LoaderOptionsPlugin({
+            minimize: true,
+            debug: false
+        }));
+        this.plugins.push(new webpack.optimize.UglifyJsPlugin({
+            beautify: false,
+            mangle: {
+                screw_ie8: true,
+                keep_fnames: true
+            },
+            compress: {
+                screw_ie8: true
+            },
+            comments: false
+        }));
+    }
+
+    this.plugins.push(new webpack.DefinePlugin({
+        ENV: JSON.stringify(options.ENV),
+        SET: JSON.stringify(options.SET)
+    }));
+
+    this.devtool = options.ENV == "production" ? "" : "inline-source-map";
+
+    this.module = {
+        rules: []
     };
+
+    this.resolve = {
+        extensions: [
+            '.', '.json', `.${type}`,
+        ]
+    };
+
+    this.entry = {};
+
     //custom files input
     if (type == 'js') {
+        this.entry['index'] = path.join(__dirname, folder, 'index');
         //this.entry['common'] = path.join(__dirname, folder, 'common');
     } else if (type == 'scss') {
-        //this.entry['file1'] = path.join(__dirname, folder, 'file1');
-    } else if (type == 'html') {
-        //this.entry['file2'] = path.join(__dirname, folder, 'file2');
+        this.entry['index'] = path.join(__dirname, folder, 'index');
+        //this.entry['files'] = path.join(__dirname, folder, 'files');
+
+        this.plugins.push(new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: path.join(__dirname, folder, 'index.html'),
+            inject: false,
+            SET: options.SET,
+            minify: {
+                html5: true,
+                collapseWhitespace: (options.ENV == "production" ? true : false),
+            }
+        }));
     }
 
     this.output = {
@@ -27,97 +81,74 @@ function CreateWebpackConfig(type) {
         publicPath: ''
     }; //publicPath !!
 
-    let outputfile = path.join(this.output.path, `index.${ext}`);
 
-    this.resolve = {
-        extensions: ['']
-    };
 
-    this.resolve.extensions.push(`.${type}`);
-
-    this.module = {
-        loaders: []
-    };
+    //this.resolve.extensions.push(".html");
 
     if (type == 'js') {
 
-        this.module.loaders.push({
+        this.module.rules.push({
             test: /\.js$/,
-            exclude: /(node_modules|bower_components)/,
-            loader: 'babel',
-            query: {
-                presets: ["react", "es2015", "stage-0"],
-                plugins: ['transform-runtime']
-            }
-        });
-        
-        this.module.loaders.push({
-            test: /\.json/,
-            loader: "json"
+            use: {
+                loader: "babel-loader",
+                options: {
+                    presets: options.ENV == "production" ? ["es2015", "stage-0","react"] :  ["es2015", "stage-0","react"], //prod ["stage-0"],
+                    plugins: options.ENV == "production" ? "transform-runtime" : ""
+                }
+            },
+            exclude: /(node_modules|bower_components)/
         });
 
     } else if (type == 'scss') {
 
-        this.module.loaders.push({
-            test: /\.scss$/,
-            loader: ExtractTextPlugin.extract('style-loader', 'css-loader?sourceMap!sass-loader?outputStyle=expanded&sourceMap=true&sourceMapContents=true')
+        this.module.rules.push({
+            test: /\.(sass|scss|css)$/,
+            exclude: /node_modules/,
+
+            use: ExtractTextPlugin.extract({
+                fallback: 'style-loader',
+                use: [{
+                    loader: 'css-loader',
+                    query: {
+                        minimize: options.ENV == "production" ? true : false,
+                        modules: true, // enables CSS Modules spec
+                        sourceMap: options.ENV == "production" ? false : true,
+                        importLoaders: 1, // will import previous amount of loaders,
+                        localIdentName: '[local]'
+                    },
+                }, {
+                    loader: 'sass-loader',
+                    query: {
+                        sourceMap: options.ENV == "production" ? false : true,
+                        sourceMapContents: options.ENV == "production" ? false : true,
+                    },
+                }]
+            })
         });
 
-        this.module.loaders.push({
+        this.module.rules.push({
             test: /\.(jpe?g|png|gif|svg|ttf|eot|woff|woff2)$/i,
-            loader: 'file?name=[path][name].[ext]'
-        });
-
-    } else if (type == 'html') {
-        
-        this.module.loaders.push({
-            test: /\.html$/,
-            loader: ExtractTextPlugin.extract('html?minimize=true')
-        });
-    }
-
-    this.plugins = [
-        new webpack.DefinePlugin({
-            NODE_ENV: JSON.stringify(NODE_ENV)
-        }),
-        function() {
-            this.plugin("done", function(stats) {
-                if (stats.compilation.errors && stats.compilation.errors.length) {
-                    console.log(stats.compilation.errors[0].error);
-                    if (fs.existsSync(outputfile)) {
-                        fs.writeFileSync(outputfile, JSON.stringify(stats.compilation.errors[0].error.details), 'utf8');
-                    }
+            use: {
+                loader: 'file-loader',
+                query: {
+                    name: '[path][name].[ext]'
                 }
-            });
-        }
-    ];
-
-    if (type == 'scss' || type == 'html') {
-        this.plugins.push(new ExtractTextPlugin(`[name].${ext}`))
-    }
-
-    this.devtool = (NODE_ENV == 'development' ? "inline-source-map" : '');
-
-    if (NODE_ENV == 'production') {
-        this.plugins.push(new webpack.optimize.UglifyJsPlugin({
-            beautify: false,
-            comments: false,
-            compress: {
-                sequences: true,
-                booleans: true,
-                loops: true,
-                unused: true,
-                warnings: false,
-                drop_console: true,
-                unsafe: true
             }
+        });
+
+        this.plugins.push(new ExtractTextPlugin({
+            filename: `[name].${ext}`,
+            disable: false,
+            allChunks: true
         }));
-        this.plugins.push(new webpack.optimize.DedupePlugin());
     }
 }
 
-module.exports = [
-    new CreateWebpackConfig('js'),
-    new CreateWebpackConfig('scss'),
-    new CreateWebpackConfig('html')
-];
+
+module.exports = function(options = {}) {
+    console.log("options", options);
+    return [
+        new CreateWebpackConfig('js', options),
+        new CreateWebpackConfig('scss', options)
+    ];
+}
